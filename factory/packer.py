@@ -52,7 +52,7 @@ def collect_files(category: str) -> list[Path]:
             if p.suffix.lower() not in {".png", ".jpg", ".jpeg", ".webp"}:
                 continue
 
-            # чтобы одинаковые имена из selected/manual не дублировались
+
             if p.name in seen_names:
                 continue
 
@@ -106,7 +106,7 @@ def create_pack(
     with open(manifest_path, "w", encoding="utf-8") as f:
         json.dump(manifest, f, ensure_ascii=False, indent=2)
 
-    # Пишем сначала во временный zip
+
     tmp_zip_path = PACKS_DIR / f"pack_{version}.tmp.zip"
     final_zip_path = PACKS_DIR / f"pack_{version}.zip"
 
@@ -114,10 +114,9 @@ def create_pack(
         for item in pack_dir.rglob("*"):
             zf.write(item, item.relative_to(pack_dir))
 
-    # Небольшая пауза, чтобы Windows отпустил файл
+
     time.sleep(0.3)
 
-    # Если вдруг старый zip уже есть
     if final_zip_path.exists():
         retry_file_op(final_zip_path.unlink)
 
@@ -126,7 +125,7 @@ def create_pack(
     publish_manifest = PUBLISH / "manifest.json"
     published_pack = PUBLISH / "packs" / final_zip_path.name
 
-    # Если publish и packs_dir пересекаются, не копируем файл сам в себя
+
     if final_zip_path.resolve() != published_pack.resolve():
         safe_copy(final_zip_path, published_pack)
 
