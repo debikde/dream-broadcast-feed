@@ -15,12 +15,12 @@
   "pack_ttl_days": 14,
   "replace_policy": "append_then_decay",
   "categories": ["ads", "news", "cartoons", "daytime", "night"],
-  "release_feed_repo_dir": "release_feed/dream-broadcast-feed",
+  "release_feed_repo_dir": ".",
   "release_feed_docs_dir": "docs",
-  "release_channel": "main",
+  "release_channel": "publisher",
   "git_auto_push": true,
   "git_remote_name": "origin",
-  "git_branch": "main",
+  "git_branch": "publisher",
   "git_commit_prefix": "Publish pack",
   "github_pages_base_url": "https://debikde.github.io/dream-broadcast-feed"
 }

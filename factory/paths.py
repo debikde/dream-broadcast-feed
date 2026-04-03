@@ -15,7 +15,6 @@ SELECTED_DIR = WORKSPACE / "selected"
 REJECTED_DIR = WORKSPACE / "rejected"
 PACKS_DIR = PUBLISH / "packs"
 
-# GitHub feed repo
 RELEASE_FEED_REPO = ROOT / SETTINGS["release_feed_repo_dir"]
 DOCS_DIR = RELEASE_FEED_REPO / SETTINGS["release_feed_docs_dir"]
 DOCS_PACKS_DIR = DOCS_DIR / "packs"

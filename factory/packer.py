@@ -5,7 +5,7 @@ import zipfile
 from pathlib import Path
 
 from .config import load_settings
-from .paths import SELECTED_DIR, MANUAL_DIR, PACKS_DIR, PUBLISH
+from .paths import SELECTED_DIR, MANUAL_DIR, PACKS_DIR
 
 SETTINGS = load_settings()
 
@@ -16,20 +16,17 @@ def build_version() -> str:
 
 def ensure_dirs() -> None:
     PACKS_DIR.mkdir(parents=True, exist_ok=True)
-    PUBLISH.mkdir(parents=True, exist_ok=True)
-    (PUBLISH / "packs").mkdir(parents=True, exist_ok=True)
 
 
 def retry_file_op(func, *args, retries: int = 8, delay: float = 0.35, **kwargs):
     last_exc = None
-    for attempt in range(retries):
+    for _ in range(retries):
         try:
             return func(*args, **kwargs)
         except PermissionError as e:
             last_exc = e
             time.sleep(delay)
         except OSError as e:
-            # WinError 32 и похожие блокировки
             last_exc = e
             time.sleep(delay)
     raise last_exc
@@ -51,7 +48,6 @@ def collect_files(category: str) -> list[Path]:
         for p in sorted(base.iterdir()):
             if p.suffix.lower() not in {".png", ".jpg", ".jpeg", ".webp"}:
                 continue
-
 
             if p.name in seen_names:
                 continue
@@ -106,14 +102,12 @@ def create_pack(
     with open(manifest_path, "w", encoding="utf-8") as f:
         json.dump(manifest, f, ensure_ascii=False, indent=2)
 
-
     tmp_zip_path = PACKS_DIR / f"pack_{version}.tmp.zip"
     final_zip_path = PACKS_DIR / f"pack_{version}.zip"
 
     with zipfile.ZipFile(tmp_zip_path, "w", compression=zipfile.ZIP_DEFLATED) as zf:
         for item in pack_dir.rglob("*"):
             zf.write(item, item.relative_to(pack_dir))
-
 
     time.sleep(0.3)
 
@@ -122,23 +116,4 @@ def create_pack(
 
     retry_file_op(tmp_zip_path.rename, final_zip_path)
 
-    publish_manifest = PUBLISH / "manifest.json"
-    published_pack = PUBLISH / "packs" / final_zip_path.name
-
-
-    if final_zip_path.resolve() != published_pack.resolve():
-        safe_copy(final_zip_path, published_pack)
-
-    with open(publish_manifest, "w", encoding="utf-8") as f:
-        json.dump(
-            {
-                "latest_version": version,
-                "latest_pack": f"packs/{final_zip_path.name}",
-                "manifest": manifest,
-            },
-            f,
-            ensure_ascii=False,
-            indent=2,
-        )
-
-    return final_zip_path, publish_manifest
+    return final_zip_path, manifest_path
