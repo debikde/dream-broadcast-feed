@@ -1,0 +1,17 @@
+{
+  "version": "2026-04-02-230540",
+  "title": "Pack 2026-04-02-230540",
+  "created_at": "2026-04-02T23:05:40",
+  "mode": "blend",
+  "weight": 0.25,
+  "ttl_days": 14,
+  "replace_policy": "append_then_decay",
+  "targets": {
+    "ads": [
+      "ads/ads_20260402_203345_001.png",
+      "ads/ads_20260402_203345_002.png",
+      "ads/ads_20260402_203345_003.png",
+      "ads/ads_20260402_203345_004.png"
+    ]
+  }
+}
