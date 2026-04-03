@@ -1,7 +1,7 @@
 {
   "channel": "publisher-broadcast",
-  "latest_version": "2026-04-03-143836",
-  "published_at": "2026-04-03T14:38:39",
+  "latest_version": "2026-04-03-165452",
+  "published_at": "2026-04-03T16:54:52",
   "packs": [
     {
       "version": "2026-04-03-141525",
@@ -43,6 +43,34 @@
             "ads/ads_20260403_141200_001.png",
             "ads/ads_20260403_141200_002.png",
             "ads/ads_20260403_141200_003.png"
+          ]
+        }
+      }
+    },
+    {
+      "version": "2026-04-03-165452",
+      "url": "packs/pack_2026-04-03-165452.zip",
+      "sha256": "d0b18a11bd19bc58b0df37f40c5a8a0bbd3b1b22df2e8f23cd26935d33b3b40a",
+      "size": 5722086,
+      "manifest": {
+        "version": "2026-04-03-165452",
+        "title": "Pack 2026-04-03-165452",
+        "created_at": "2026-04-03T16:54:52",
+        "mode": "blend",
+        "weight": 0.25,
+        "ttl_days": 14,
+        "replace_policy": "append_then_decay",
+        "targets": {
+          "ads": [
+            "ads/ads_20260403_141200_001.png",
+            "ads/ads_20260403_141200_002.png",
+            "ads/ads_20260403_141200_003.png"
+          ],
+          "news": [
+            "news/news_20260403_164822_001.png",
+            "news/news_20260403_164822_002.png",
+            "news/news_20260403_164822_003.png",
+            "news/news_20260403_164822_004.png"
           ]
         }
       }
