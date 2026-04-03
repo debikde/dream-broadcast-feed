@@ -76,3 +76,32 @@
 [2026-04-03 12:30:01] Перенесено в selected: ads_20260403_122954_001.png
 [2026-04-03 12:30:09] Генерация 1 изображений...
 [2026-04-03 12:30:09] Готово: 1 файлов в generated/ads
+[2026-04-03 14:05:48] Запуск A1111...
+[2026-04-03 14:05:48] Запуск A1111: C:\Users\Zina\DREAM PROJECT 2\sd.webui\run.bat
+[2026-04-03 14:07:05] Убрано из selected: ads_20260403_122954_001.png
+[2026-04-03 14:07:05] Убрано из selected: bdce0e1d0ce611b0d3645c314f2f406a.jpg
+[2026-04-03 14:07:21] A1111 недоступен
+[2026-04-03 14:07:37] Остановка A1111...
+[2026-04-03 14:07:37] A1111 остановлен
+[2026-04-03 14:11:56] A1111 доступен
+[2026-04-03 14:11:59] Сгенерировано промптов: 3
+[2026-04-03 14:12:00] Проверка / запуск A1111...
+[2026-04-03 14:12:00] A1111 уже запущен
+[2026-04-03 14:12:00] Генерация 3 изображений...
+[2026-04-03 14:12:00] A1111 txt2img request: url=http://127.0.0.1:7860/sdapi/v1/txt2img, sampler=Euler a, size=768x768, steps=24, cfg=6.5
+[2026-04-03 14:12:55] A1111 image saved: C:\Users\Zina\DREAM PROJECT 2\content_factory_app\workspace\generated\ads\ads_20260403_141200_001.png
+[2026-04-03 14:12:55] A1111 txt2img request: url=http://127.0.0.1:7860/sdapi/v1/txt2img, sampler=Euler a, size=768x768, steps=24, cfg=6.5
+[2026-04-03 14:13:49] A1111 image saved: C:\Users\Zina\DREAM PROJECT 2\content_factory_app\workspace\generated\ads\ads_20260403_141200_002.png
+[2026-04-03 14:13:49] A1111 txt2img request: url=http://127.0.0.1:7860/sdapi/v1/txt2img, sampler=Euler a, size=768x768, steps=24, cfg=6.5
+[2026-04-03 14:14:41] A1111 image saved: C:\Users\Zina\DREAM PROJECT 2\content_factory_app\workspace\generated\ads\ads_20260403_141200_003.png
+[2026-04-03 14:14:41] Готово: 3 файлов в generated/ads
+[2026-04-03 14:14:57] Перенесено в selected: ads_20260403_141200_001.png
+[2026-04-03 14:14:58] Перенесено в selected: ads_20260403_141200_002.png
+[2026-04-03 14:14:59] Перенесено в selected: ads_20260403_141200_003.png
+[2026-04-03 14:15:26] Пакет собран локально
+[2026-04-03 14:15:30] Публикация в GitHub...
+[2026-04-03 14:15:30] Ошибка публикации: git push failed:
+error: src refspec publisher-broadcast does not match any
+error: failed to push some refs to 'https://github.com/debikde/dream-broadcast-feed.git'
+
+

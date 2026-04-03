@@ -17,10 +17,15 @@
   "categories": ["ads", "news", "cartoons", "daytime", "night"],
   "release_feed_repo_dir": ".",
   "release_feed_docs_dir": "docs",
-  "release_channel": "publisher",
+  "release_channel": "publisher-broadcast",
   "git_auto_push": true,
   "git_remote_name": "origin",
-  "git_branch": "publisher",
+  "git_branch": "publisher-broadcast",
   "git_commit_prefix": "Publish pack",
-  "github_pages_base_url": "https://debikde.github.io/dream-broadcast-feed"
+  "github_pages_base_url": "https://debikde.github.io/dream-broadcast-feed",
+  "automatic1111_managed": true,
+  "automatic1111_workdir": "C:/Users/Zina/DREAM PROJECT 2/sd.webui",
+  "automatic1111_launch_script": "run.bat",
+  "automatic1111_start_timeout": 300,
+  "automatic1111_stop_on_exit": true
 }

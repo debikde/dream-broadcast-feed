@@ -1,0 +1,11 @@
+{
+  "prompt": "synthetic family warmth, uncanny tv commercial, no readable brand, for art installation, no text",
+  "category": "ads",
+  "backend": "automatic1111",
+  "negative_prompt": "low quality, blurry, watermark, text, logo, deformed",
+  "width": 768,
+  "height": 768,
+  "steps": 24,
+  "cfg_scale": 6.5,
+  "sampler_name": "Euler a"
+}

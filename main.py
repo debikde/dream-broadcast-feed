@@ -5,9 +5,10 @@ from tkinter import filedialog, messagebox, ttk
 
 from PIL import Image, ImageOps, ImageTk
 
+from factory.a1111_manager import A1111Manager
 from factory.config import load_settings
 from factory.files import import_manual, list_images, move_to_rejected, move_to_selected
-from factory.generator import Automatic1111Backend, generate_batch
+from factory.generator import generate_batch
 from factory.logger import log
 from factory.packer import create_pack
 from factory.paths import ensure_dirs
@@ -29,7 +30,12 @@ class ThumbGrid(ttk.Frame):
         self.canvas = tk.Canvas(self, bg="#151515", highlightthickness=0)
         self.scrollbar = ttk.Scrollbar(self, orient="vertical", command=self.canvas.yview)
         self.inner = ttk.Frame(self.canvas)
-        self.inner.bind("<Configure>", lambda e: self.canvas.configure(scrollregion=self.canvas.bbox("all")))
+
+        self.inner.bind(
+            "<Configure>",
+            lambda e: self.canvas.configure(scrollregion=self.canvas.bbox("all"))
+        )
+
         self.canvas.create_window((0, 0), window=self.inner, anchor="nw")
         self.canvas.configure(yscrollcommand=self.scrollbar.set)
 
@@ -49,6 +55,7 @@ class ThumbGrid(ttk.Frame):
         for idx, path in enumerate(items):
             row = idx // cols
             col = idx % cols
+
             frame = ttk.Frame(self.inner, relief="ridge", padding=8)
             frame.grid(row=row, column=col, padx=10, pady=10, sticky="nsew")
 
@@ -71,25 +78,44 @@ class ThumbGrid(ttk.Frame):
 
             btns = ttk.Frame(frame)
             btns.pack(fill="x")
+
             if source in ("generated", "manual"):
-                ttk.Button(btns, text="В selected", command=lambda p=path, c=category: self.approve_callback(c, p)).pack(side="left", padx=4)
-                ttk.Button(btns, text="В rejected", command=lambda p=path, c=category: self.reject_callback(c, p)).pack(side="left", padx=4)
+                ttk.Button(
+                    btns,
+                    text="В selected",
+                    command=lambda p=path, c=category: self.approve_callback(c, p)
+                ).pack(side="left", padx=4)
+
+                ttk.Button(
+                    btns,
+                    text="В rejected",
+                    command=lambda p=path, c=category: self.reject_callback(c, p)
+                ).pack(side="left", padx=4)
+
             elif source == "selected":
-                ttk.Button(btns, text="Убрать", command=lambda p=path, c=category: self.reject_callback(c, p)).pack(side="left", padx=4)
+                ttk.Button(
+                    btns,
+                    text="Убрать",
+                    command=lambda p=path, c=category: self.reject_callback(c, p)
+                ).pack(side="left", padx=4)
 
 
 class App(tk.Tk):
     def __init__(self):
         super().__init__()
         ensure_dirs()
+
         self.title("Content Factory")
-        self.geometry("1380x920")
-        self.minsize(1200, 800)
+        self.geometry("1420x940")
+        self.minsize(1220, 820)
+
+        self.a1111_manager = A1111Manager()
 
         self.category_var = tk.StringVar(value=CATEGORIES[0])
         self.backend_var = tk.StringVar(value=SETTINGS["default_backend"])
         self.prompt_prefix_var = tk.StringVar(value="")
         self.batch_count_var = tk.IntVar(value=4)
+
         self.status_var = tk.StringVar(value="Готово")
 
         self.pack_title_var = tk.StringVar(value="")
@@ -104,17 +130,37 @@ class App(tk.Tk):
         self._build_ui()
         self.refresh_all()
 
+        self.protocol("WM_DELETE_WINDOW", self.on_close)
+
+    # --------------------------
+    # UI
+    # --------------------------
     def _build_ui(self):
         top = ttk.Frame(self, padding=10)
         top.pack(fill="x")
 
         ttk.Label(top, text="Категория:").pack(side="left")
-        ttk.Combobox(top, textvariable=self.category_var, values=CATEGORIES, width=14, state="readonly").pack(side="left", padx=6)
+        ttk.Combobox(
+            top,
+            textvariable=self.category_var,
+            values=CATEGORIES,
+            width=14,
+            state="readonly"
+        ).pack(side="left", padx=6)
 
         ttk.Label(top, text="Backend:").pack(side="left", padx=(12, 0))
-        ttk.Combobox(top, textvariable=self.backend_var, values=["automatic1111", "mock"], width=16, state="readonly").pack(side="left", padx=6)
+        ttk.Combobox(
+            top,
+            textvariable=self.backend_var,
+            values=["automatic1111", "mock"],
+            width=16,
+            state="readonly"
+        ).pack(side="left", padx=6)
 
-        ttk.Button(top, text="Проверить A1111", command=self.check_backend).pack(side="left", padx=8)
+        ttk.Button(top, text="Проверить A1111", command=self.check_backend).pack(side="left", padx=4)
+        ttk.Button(top, text="Запустить A1111", command=self.start_a1111).pack(side="left", padx=4)
+        ttk.Button(top, text="Остановить A1111", command=self.stop_a1111).pack(side="left", padx=4)
+
         ttk.Label(top, textvariable=self.status_var).pack(side="right")
 
         notebook = ttk.Notebook(self)
@@ -138,13 +184,24 @@ class App(tk.Tk):
 
         row1 = ttk.Frame(frame)
         row1.pack(fill="x", pady=4)
+
         ttk.Label(row1, text="Префикс / свой текст:").pack(side="left")
-        ttk.Entry(row1, textvariable=self.prompt_prefix_var, width=80).pack(side="left", padx=8, fill="x", expand=True)
+        ttk.Entry(row1, textvariable=self.prompt_prefix_var, width=80).pack(
+            side="left",
+            padx=8,
+            fill="x",
+            expand=True
+        )
 
         row2 = ttk.Frame(frame)
         row2.pack(fill="x", pady=4)
+
         ttk.Label(row2, text="Количество промптов:").pack(side="left")
-        ttk.Spinbox(row2, from_=1, to=30, textvariable=self.batch_count_var, width=8).pack(side="left", padx=8)
+        ttk.Spinbox(row2, from_=1, to=30, textvariable=self.batch_count_var, width=8).pack(
+            side="left",
+            padx=8
+        )
+
         ttk.Button(row2, text="Сгенерировать промпты", command=self.generate_prompts).pack(side="left", padx=8)
         ttk.Button(row2, text="Сгенерировать изображения", command=self.generate_images).pack(side="left", padx=8)
         ttk.Button(row2, text="Импортировать свои картинки", command=self.import_images).pack(side="left", padx=8)
@@ -187,14 +244,30 @@ class App(tk.Tk):
 
         r2 = ttk.Frame(form)
         r2.pack(fill="x", pady=4)
+
         ttk.Label(r2, text="Mode:").pack(side="left")
-        ttk.Combobox(r2, textvariable=self.mode_var, values=["blend", "priority", "replace", "staged"], width=14, state="readonly").pack(side="left", padx=8)
+        ttk.Combobox(
+            r2,
+            textvariable=self.mode_var,
+            values=["blend", "priority", "replace", "staged"],
+            width=14,
+            state="readonly"
+        ).pack(side="left", padx=8)
+
         ttk.Label(r2, text="Weight:").pack(side="left")
         ttk.Entry(r2, textvariable=self.weight_var, width=8).pack(side="left", padx=8)
+
         ttk.Label(r2, text="TTL days:").pack(side="left")
         ttk.Entry(r2, textvariable=self.ttl_var, width=8).pack(side="left", padx=8)
+
         ttk.Label(r2, text="Replace policy:").pack(side="left")
-        ttk.Combobox(r2, textvariable=self.policy_var, values=["append", "append_then_decay", "replace_all"], width=18, state="readonly").pack(side="left", padx=8)
+        ttk.Combobox(
+            r2,
+            textvariable=self.policy_var,
+            values=["append", "append_then_decay", "replace_all"],
+            width=18,
+            state="readonly"
+        ).pack(side="left", padx=8)
 
         buttons = ttk.Frame(form)
         buttons.pack(anchor="w", pady=12)
@@ -206,26 +279,78 @@ class App(tk.Tk):
         self.pack_info = tk.Text(root, height=18, wrap="word")
         self.pack_info.pack(fill="both", expand=True, pady=(10, 0))
 
+    # --------------------------
+    # status / close
+    # --------------------------
     def set_status(self, msg: str):
         self.status_var.set(msg)
         self.update_idletasks()
         log(msg)
 
+    def on_close(self):
+        try:
+            if SETTINGS.get("automatic1111_stop_on_exit", True):
+                self.a1111_manager.stop()
+        finally:
+            self.destroy()
+
+    # --------------------------
+    # A1111
+    # --------------------------
     def check_backend(self):
         if self.backend_var.get() != "automatic1111":
             self.set_status("Текущий backend не требует проверки")
             return
-        ok = Automatic1111Backend().ping()
+
+        ok = self.a1111_manager.ping()
         self.set_status("A1111 доступен" if ok else "A1111 недоступен")
 
+    def start_a1111(self):
+        def worker():
+            try:
+                self.set_status("Запуск A1111...")
+                self.a1111_manager.ensure_running()
+                self.set_status("A1111 запущен и готов")
+            except Exception as e:
+                err_text = str(e)
+                self.after(
+                    100,
+                    lambda err_text=err_text: messagebox.showerror("Ошибка запуска A1111", err_text)
+                )
+                self.set_status(f"Ошибка запуска A1111: {err_text}")
+
+        threading.Thread(target=worker, daemon=True).start()
+
+    def stop_a1111(self):
+        def worker():
+            try:
+                self.set_status("Остановка A1111...")
+                self.a1111_manager.stop()
+                self.set_status("A1111 остановлен")
+            except Exception as e:
+                err_text = str(e)
+                self.after(
+                    100,
+                    lambda err_text=err_text: messagebox.showerror("Ошибка остановки A1111", err_text)
+                )
+                self.set_status(f"Ошибка остановки A1111: {err_text}")
+
+        threading.Thread(target=worker, daemon=True).start()
+
+    # --------------------------
+    # prompts / generation
+    # --------------------------
     def generate_prompts(self):
         category = self.category_var.get()
         count = int(self.batch_count_var.get())
         prefix = self.prompt_prefix_var.get().strip()
+
         prompts = generate_prompt_batch(category, count, custom_prefix=prefix)
         save_prompt_batch(category, prompts)
+
         self.prompt_box.delete("1.0", "end")
         self.prompt_box.insert("1.0", "\n".join(prompts))
+
         self.set_status(f"Сгенерировано промптов: {len(prompts)}")
 
     def _get_prompts_from_box(self) -> list[str]:
@@ -236,19 +361,30 @@ class App(tk.Tk):
         category = self.category_var.get()
         backend = self.backend_var.get()
         prompts = self._get_prompts_from_box()
+
         if not prompts:
             messagebox.showwarning("Нет промптов", "Сначала сгенерируй или введи промпты.")
             return
 
         def worker():
             try:
+                if backend == "automatic1111":
+                    self.set_status("Проверка / запуск A1111...")
+                    self.a1111_manager.ensure_running()
+
                 self.set_status(f"Генерация {len(prompts)} изображений...")
                 results = generate_batch(category, prompts, backend_name=backend)
+
                 self.set_status(f"Готово: {len(results)} файлов в generated/{category}")
                 self.after(100, self.refresh_all)
+
             except Exception as e:
                 err_text = str(e)
-                self.after(100, lambda err_text=err_text: messagebox.showerror("Ошибка генерации", err_text))
+                self.after(
+                    100,
+                    lambda err_text=err_text: messagebox.showerror("Ошибка генерации", err_text)
+                )
+                self.set_status(f"Ошибка генерации: {err_text}")
 
         threading.Thread(target=worker, daemon=True).start()
 
@@ -258,12 +394,17 @@ class App(tk.Tk):
             title="Выбери свои картинки",
             filetypes=[("Images", "*.png *.jpg *.jpeg *.webp")],
         )
+
         if not files:
             return
+
         import_manual(files, category)
         self.set_status(f"Импортировано вручную: {len(files)}")
         self.refresh_all()
 
+    # --------------------------
+    # review
+    # --------------------------
     def approve_item(self, category: str, path: Path):
         move_to_selected([path], category)
         self.set_status(f"Перенесено в selected: {path.name}")
@@ -288,6 +429,9 @@ class App(tk.Tk):
         self.manual_grid.set_items(category, "manual", list_images(category, "manual"))
         self.selected_grid.set_items(category, "selected", list_images(category, "selected"))
 
+    # --------------------------
+    # packing / publishing
+    # --------------------------
     def _do_build(self):
         zip_path, manifest_path = create_pack(
             title=self.pack_title_var.get().strip(),
@@ -303,6 +447,7 @@ class App(tk.Tk):
     def build_pack(self):
         try:
             zip_path, manifest_path = self._do_build()
+
             self.pack_info.delete("1.0", "end")
             self.pack_info.insert(
                 "1.0",
@@ -311,7 +456,9 @@ class App(tk.Tk):
                 f"Manifest: {manifest_path}\n\n"
                 f"Дальше можно нажать 'Опубликовать последний пакет в GitHub'.\n"
             )
+
             self.set_status("Пакет собран локально")
+
         except Exception as e:
             messagebox.showerror("Ошибка упаковки", str(e))
             self.set_status(f"Ошибка упаковки: {e}")
@@ -325,6 +472,7 @@ class App(tk.Tk):
             try:
                 self.set_status("Публикация в GitHub...")
                 result = publish_pack(self.last_built_zip, self.last_built_manifest)
+
                 info = (
                     f"Пакет опубликован.\n\n"
                     f"Version: {result['version']}\n"
@@ -342,9 +490,13 @@ class App(tk.Tk):
                 self.after(100, lambda info=info: self.pack_info.delete("1.0", "end"))
                 self.after(100, lambda info=info: self.pack_info.insert("1.0", info))
                 self.set_status("Пакет опубликован в GitHub feed")
+
             except Exception as e:
                 err_text = str(e)
-                self.after(100, lambda err_text=err_text: messagebox.showerror("Ошибка публикации", err_text))
+                self.after(
+                    100,
+                    lambda err_text=err_text: messagebox.showerror("Ошибка публикации", err_text)
+                )
                 self.set_status(f"Ошибка публикации: {err_text}")
 
         threading.Thread(target=worker, daemon=True).start()
@@ -376,9 +528,13 @@ class App(tk.Tk):
                 self.after(100, lambda info=info: self.pack_info.delete("1.0", "end"))
                 self.after(100, lambda info=info: self.pack_info.insert("1.0", info))
                 self.set_status("Пакет собран и опубликован")
+
             except Exception as e:
                 err_text = str(e)
-                self.after(100, lambda err_text=err_text: messagebox.showerror("Ошибка сборки/публикации", err_text))
+                self.after(
+                    100,
+                    lambda err_text=err_text: messagebox.showerror("Ошибка сборки/публикации", err_text)
+                )
                 self.set_status(f"Ошибка сборки/публикации: {err_text}")
 
         threading.Thread(target=worker, daemon=True).start()
